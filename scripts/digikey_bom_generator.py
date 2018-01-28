@@ -4,16 +4,22 @@ import os
 import sys
 import xml.etree.ElementTree as xml
 
-def is_supplier_part_number(field):
+def is_part_number(field, allowed=[]):
    '''
-   Heuristic identification of supplier part number fields in KiCAD.
+   Heuristic identification of part number fields in KiCAD.
    '''
    field_name = field.attrib["name"].lower()
-   if (("suppl" in field_name or "vend" in field_name) and
+   if (len([x for x in allowed if x in field_name]) > 0 and
        "part" in field_name and
        ("#" in field_name or "number" in field_name or "no." in field_name)):
       return True
    return False
+
+def is_supplier_part_number(field):
+   return is_part_number(field, ["suppl", "vend"])
+
+def is_manufacturer_part_number(field):
+   return is_part_number(field, ["manuf"])
 
 retval = 0
 component_count = 0
@@ -59,6 +65,7 @@ for child in root:
                   # that looks like a vendor part number field.
                   for field in grandchild:
                      if is_supplier_part_number(field):
+                     #if is_manufacturer_part_number(field):
                         # Grab the part number and get out
                         part_number = field.text.strip()
                         break
